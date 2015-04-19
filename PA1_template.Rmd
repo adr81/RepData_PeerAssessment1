@@ -1,25 +1,236 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducable Research Peer Assessment 1"
+author: "Alan Rice"
+date: "April 19th 2015"
+output: html_document
 ---
 
+## Introduction ##
 
-## Loading and preprocessing the data
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a [Fitbit](http://www.fitbit.com/), [Nike Fuelband](http://www.nike.com/us/en_us/c/nikeplus-fuelband), or [Jawbone Up](https://jawbone.com/up). These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals throughout the day. The data consists of two months of data from an anonymous individual collected during the months of October and November 2012 and include the number of steps taken in 5 minute intervals each day.
+
+## Data ##
+
+The data for this assignment can be downloaded from the course web site:
+
+- Dataset: [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) [56k]
+
+The variables included in this dataset are:
+
+- **steps**: Number of steps taking in a 5-minute interval (missing values are coded as `NA`).
+- **date**: The date on which the measurement was taken in YYYY-MM-DD format.
+- **interval**: Identifier for the 5-minute interval in which measurement was taken.
+
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
+
+## Assignment ##
+
+During this assignment I will carry out the steps below and answer the following questions:
+
+1. Load and preprocess the data.
+2. What is the mean total number of steps taken per day?
+3. What is the average daily activity pattern?
+4. Input missing values.
+5. Are there any differences in activity patterns between weekdays and weekends?
+
+## Loading and Preprocessing the data ##
+
+The data is loaded into R and stored as `amd` *(Activity Monitoring Data)*.
+
+```{r}
+amd <- read.csv("./activity.csv", stringsAsFactors = FALSE)
+summary(amd)
+```
+
+This work requires the packages `dplyr`, `ggplot2` and `lubridate`.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+```
+
+## What is the total number of steps taken per day? ##
+
+In this section I will carry out the following:
+
+1. Calculate the total number of steps taken per day.
+2. Make a histogram of the total number of steps taken each day.
+3. Calculate the mean and median of the total number of steps taken per day.
+
+For this part of the assignment missing values are ignored.
+
+**1. Calculate the total number of steps taken per day**
+
+Group the data by date and summarise:
+
+```{r}
+daily <- summarise(group_by(amd, date), steps = sum(steps, na.rm = TRUE))
+daily
+```
+
+**2. Make a histogram of the total number of steps taken each day**
+
+```{r}
+hist(daily$steps, xlab = "Steps", main = "Daily Steps", col = "steelblue")
+```
+
+**3. Calculate the mean and median of the total number of steps taken per day**
+
+The mean number of steps per day is:
+
+```{r}
+mean(daily$steps)
+```
+
+The median number of steps per day is:
+
+```{r}
+median(daily$steps)
+```
+
+## What is the average daily activity pattern? ##
+
+In this section I will:
+
+1. Make a time series plot of the 5 minute intervals and the average number of steps taken averaged across all days.
+2. Identify which 5 minute interval, on average across all days, contains the maximum number of steps.
+
+For this part of the assignment missing values are ignored.
+
+**1. Make a time series plot of the 5 minute intervals and the average number of steps taken averaged across all days**
+
+For the average number of steps I have taken the mean of each interval:
+
+```{r}
+intervals <- summarise(group_by(amd, interval), steps = mean(steps, na.rm = TRUE))
+intervals
+```
+
+Now plot the intervals against the mean number of steps:
+
+```{r}
+g <- qplot(interval, steps, data = intervals, geom = "line")
+g + geom_line(color = "steelblue")
+```
+
+**2. Identify which 5 minute interval, on average across all days, contains the maximum number of steps**
+
+```{r}
+filter(intervals, steps == max(intervals$steps))
+```
+
+## Input missing values ##
+
+In this section I will:
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s).
+2. Devise a strategy for filling in all the missing values in the dataset.
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+4. Make a histogram of the total number of steps taken each day and calculate the mean and median steps taken per day.
+
+**1. Calculate and report the total number of missing values in the dataset**
+
+```{r}
+sum(is.na(amd$steps))
+```
+
+**2. Devise a strategy for filling in all the missing values in the dataset**
+
+I have decided that I will use the mean number of steps per 5 minute interval to replace the `NA`s, e.g. for the first observation in `amd` I will use the mean value for interval `0` e.g.:
+
+```{r}
+amd[1, ]
+filter(intervals, interval == 0)
+```
+
+**3. Create a new dataset that is equal to the original dataset but with the missing data filled in**
+
+To do this firstly merge the `amd` and `intervals` dataframes to create a single dataframe containing both the number of steps and the average number for that interval:
+
+```{r}
+merged <- rename(merge(amd, intervals, by = "interval"), mean.steps = steps.y, steps = steps.x)
+summary(merged)
+```
 
 
+Then separate the data into two dataframes, one without the `NA`s (`no.na`) and the other with only the `NA`s (`na.only`):
 
-## What is mean total number of steps taken per day?
+```{r}
+no.na <- filter(merged, is.na(steps) == FALSE)
+only.na <- filter(merged, is.na(steps) == TRUE)
+summary(no.na)
+summary(only.na)
+```
 
+Now in the `only.na` dataframe replace the values in `steps` with those in `mean.steps`:
 
+```{r}
+only.na$steps <- only.na$mean.steps
+summary(only.na)
+```
 
-## What is the average daily activity pattern?
+Finally merge the two dataframes back together again:
 
+```{r}
+new.amd <- rbind(no.na, only.na)
+summary(new.amd)
+```
 
+**4. Make a histogram of the total number of steps taken each day and calculate the mean and median steps taken per day**
 
-## Imputing missing values
+As before group the data by date, summarise and then plot the histogram:
 
+```{r}
+new.daily <- summarise(group_by(new.amd, date), steps = sum(steps))
+hist(new.daily$steps, xlab = "Steps", main = "Daily Steps", col = "steelblue")
+```
 
+Then calculate the mean and median number of steps in the new data set:
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+mean(new.daily$steps)
+median(new.daily$steps)
+```
+
+Now compare them to the old mean & median values:
+
+```{r}
+mean(daily$steps)
+median(daily$steps)
+```
+
+Replacing the `NA`s in the data with the mean for that interval has increased both the mean and median values:
+
+```{r}
+mean(new.daily$steps) - mean(daily$steps)
+median(new.daily$steps) - median(daily$step)
+```
+
+## Are there differences in activity patterns between weekdays and weekends? ##
+
+In this section I will:
+
+1. Create a new factor variable in the new dataset with two levels - *weekday* and *weekend* indicating whether a given date is on a weekday or weekend.
+2. Make a panel plot containing a time series plot of the 5 minute interval and the average number of steps taken, averaged across all weekday & weekend days.
+
+**1. Create a new factor variable in the new dataset with two levels - *weekday* and *weekend* indicating whether a given date is on a weekday or weekend**
+
+The following code converts the `new.amd$date` variable into `POSIXct` format, determines what day of the week it is and then whether or not this is a *weekday* or *weekend* and adds this as a new factor variable:
+
+```{r}
+new.amd <- mutate(new.amd, day = as.factor(ifelse(weekdays(ymd(new.amd$date)) %in% c("Saturday", "Sunday"), "Weekend", "Weekday")))
+summary(new.amd)
+```
+
+**2. Make a panel plot containing a time series plot of the 5 minute interval and the average number of steps taken, averaged across all weekday & weekend days**
+
+As before summarise the data by `interval` & `day` then plot the data:
+
+```{r}
+new.intervals <- summarise(group_by(new.amd, interval, day), steps = mean(steps))
+q <- qplot(interval, steps, data = new.intervals, facets = day ~ ., geom = "line")
+q + geom_line(color = "steelblue")
+```
