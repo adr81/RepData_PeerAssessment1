@@ -82,7 +82,7 @@ library(ggplot2)
 ```
 
 ```
-## Warning: package 'ggplot2' was built under R version 3.1.2
+## Warning: package 'ggplot2' was built under R version 3.1.3
 ```
 
 ```r
@@ -137,7 +137,7 @@ daily
 hist(daily$steps, xlab = "Steps", main = "Daily Steps", col = "steelblue")
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
 **3. Calculate the mean and median of the total number of steps taken per day**
 
@@ -207,7 +207,7 @@ g <- qplot(interval, steps, data = intervals, geom = "line")
 g + geom_line(color = "steelblue")
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
 
 **2. Identify which 5 minute interval, on average across all days, contains the maximum number of steps**
 
@@ -370,7 +370,7 @@ new.daily <- summarise(group_by(new.amd, date), steps = sum(steps))
 hist(new.daily$steps, xlab = "Steps", main = "Daily Steps", col = "steelblue")
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-16-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-16-1.png) 
 
 Then calculate the mean and median number of steps in the new data set:
 
@@ -474,4 +474,4 @@ q <- qplot(interval, steps, data = new.intervals, facets = day ~ ., geom = "line
 q + geom_line(color = "steelblue")
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-21-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-21-1.png) 
